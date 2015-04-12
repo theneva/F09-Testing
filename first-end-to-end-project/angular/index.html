@@ -11,10 +11,10 @@
             <li class="nav navbar-nav"><a href="/#/">Home</a></li>
         </ul>
 
-        <a class="navbar-text navbar-right" href="/#/login" ng-if="!currentUser">Log in</a>
-        <a class="navbar-text navbar-right" ng-click="logout()" ng-if="currentUser">log out</a>
+        <a class="navbar-text navbar-right login" href="/#/login" ng-if="!currentUser">Log in</a>
+        <a class="navbar-text navbar-right logout" ng-click="logout()" ng-if="currentUser">log out</a>
 
-        <p class="navbar-text navbar-right" ng-if="currentUser">{{currentUser}}</p>
+        <p class="navbar-text navbar-right current-user" ng-if="currentUser">{{currentUser}}</p>
     </div>
 </nav>
 

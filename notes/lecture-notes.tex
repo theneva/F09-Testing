@@ -294,7 +294,51 @@ element(by.css('.username-input')).sendKeys('theneva');
 
 \textbf{NB}: These are all asynchronous events!
 
+Now to actually write a test, add the class 'login' to the Login link in the navbar:
 
+\begin{lstlisting}
+<a class="navbar-text navbar-right <@\textcolor{blue}{login}@>" href="/#/login" ng-if="!currentUser">Log in</a>
+\end{lstlisting}
+
+Then use Protractor locators to select and click the link:
+
+\begin{lstlisting}
+// click 'login'
+var loginLink = element(by.css('nav .login'));
+loginLink.click();    
+\end{lstlisting}
+
+\textbf{NB}: Entering a nonexistent ID results in a failed test.
+
+Now fill in the login form, click the login button, and save a new item:
+
+\begin{lstlisting}
+// fill out and submit login form
+var usernameInput = element(by.model('username'));
+usernameInput.sendKeys('theneva');
+
+var passwordInput = element(by.model('password'));
+passwordInput.sendKeys('1234');
+
+// Click the login button
+var loginButton = element(by.css('.button-login'));
+loginButton.click();
+
+// save a new item on the home page
+var nameInput = element(by.model('newItem.name'));
+nameInput.sendKeys('Some random item');
+
+var saveButton = element(by.css('.button-save'));
+saveButton.click();
+\end{lstlisting}
+
+Finally, assert that the new item was added to the top of the list:
+
+\begin{lstlisting}
+
+\end{lstlisting}
+
+\textit{browser.pause()} in your tests is a nice tool that lets you pause the test execution and step through so you can see exactly what happens.
 
 \section{Unit testing}
 
