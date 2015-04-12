@@ -1,0 +1,6 @@
+{
+  "name": "first-testing-project-server",
+  "dependencies": {
+    "express": "^4.12.3"
+  }
+}

@@ -1,0 +1,227 @@
+\documentclass[british]{article}
+\usepackage{pdfpages}
+\usepackage{fullpage}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{babel}
+\usepackage{csquotes}
+\SetBlockThreshold{2}
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{.jpg,.png}
+\graphicspath{{./images/}}
+\usepackage{float}
+\usepackage{url}
+\usepackage{listings}
+\lstset{escapeinside={<@}{@>}}
+\usepackage{color}
+
+\title{PG6300-14 Webutvikling \& API-design lecture notes 09: Testing}
+\author{Martin Lehmann}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Intro}
+Core functionality is now complete (except security in WebSockets -- not part of the curriculum.
+
+Stability time! Testing is a great way of ensuring stability AND expressing user stories (thus removing the need for extensive documentation).
+
+Tests developers know when they made a mistake that messed up the rest of the application. You've all done (part of) this before.
+
+A well-written application uses both end-to-end and unit tests on both the client and the server.
+
+Minor side note: \textbf{Dev dependencies}
+
+\begin{lstlisting}
+$ npm install --save mongoose
+$ npm install --save-dev gulp
+\end{lstlisting}
+
+\section{End-to-end testing}
+
+\begin{itemize}
+  \item Test \textit{everything} from UI to database
+  \item Slow, but very good for catching errors (catch everything)
+\end{itemize}
+
+\subsection{Protractor}
+
+\begin{itemize}
+  \item A tool for running end-to-end tests in Angular JS applications
+  \item Not limited to Angular, but specifically designed for Angular (by the AngularJS team)
+  \item Protractor is a Node.js app
+  \item Uses WebDriver \& Selenium to run an actual browser (thus, slow)
+  \item Intall as dev dependency via NPM
+    \begin{lstlisting}
+$ npm install --save-dev protractor        
+    \end{lstlisting}
+  \begin{itemize}
+      \item Protractor has very large files for an NPM package -- don't include it as a production dependency as deployment will be slowed down.
+  \end{itemize}
+  \item Set up WebDriver with Selenium "automagically"
+    \begin{lstlisting}
+$ ./node_modules/.bin/webdriver-manager update
+Updating selenium standalone
+downloading https://selenium-release.storage.googleapis.com/2.45/selenium-server-standalone-2.45.0.jar...
+Updating chromedriver
+downloading https://chromedriver.storage.googleapis.com/2.14/chromedriver_mac32.zip...
+chromedriver_2.14.zip downloaded to /Users/theneva/Dropbox/WACT/PG6300 Webutvikling og API-design/f09-testing/first-end-to-end-project/node_modules/protractor/selenium/chromedriver_2.14.zip
+selenium-server-standalone-2.45.0.jar downloaded to /Users/theneva/Dropbox/WACT/PG6300 Webutvikling og API-design/f09-testing/first-end-to-end-project/node_modules/protractor/selenium/selenium-server-standalone-2.45.0.jar
+$ 
+    \end{lstlisting}
+  \item Protractor is just a test \textit{runner}. Time to add a testing framework!
+  \item Several options
+  \begin{itemize}
+    \item QUnit (for JQuery): inflexible, verbose, weak when it comes to asynchronous and promise-based testing
+    \item Jasmine (for Behavious-Driven Development): Based on testing in Ruby. Much more concise than QUnit, but weak when it comes to asynchronous and promise-based testing. The choice for most Angular apps (including the Angular team)
+    \item Mocha: The choice for most Node applications. Flexible, pick \& choose tools that fit your application. Well supported with all Angular tools. Will be using this.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Mocha}
+\begin{itemize}
+  \item Test framework (you write tests with Mocha, just like with JUnit for Java, NUnit for .NET, XCTest for Objective-C and Swift, and so on
+  \item Requires a few configuration options, but nothing too bad
+\end{itemize}
+
+\subsection{Basic Protractor test}
+\begin{itemize}
+  \item Convention to put all tests in \textit{project root}/test/
+  \item Three different test methods:
+  \begin{itemize}
+    \item End-to-end: \textit{project}/test/e2e/
+    \item Node server: \textit{project}/test/node
+    \item Angular: \textit{project}/test/angular
+    \item ex:
+      \begin{lstlisting}
+$ mkdir -p test/e2e test/angular test/node
+
+project root
+`- test
+  `- angular
+  `- e2e
+  `- node
+      \end{lstlisting}
+  \end{itemize}
+\end{itemize}
+
+\subsubsection{First test time!}
+\begin{itemize}
+  \item Protractor is great for describing user stories; design tests with users in mind
+  \item E-commerce: Come to the site, find a product, add it to the shopping card, complete the order
+  \item Tests hit many (all?) parts of the application and ensure that common flows are always stable
+  \item Too many tests (or too fine-grained tests) become too slow, take too long to write, and thus changing design becomes bad. Feature tests are good, but use with care
+\end{itemize}
+
+First test: test/e2e/making-a-post.spec.js
+\begin{lstlisting}
+describe('making a post', function() {
+    it('logs in and creates a new post', function() {
+        // go to homepage
+        // click 'login'
+        // fill out and submit login form
+        // submit a new post on the posts page
+        
+        // The new post should be visible as the first post on the page
+    });
+});
+\end{lstlisting}
+
+\begin{itemize}
+  \item Tests MUST be named *.spec.js for Protractor to find them -- this allows us to have normal .js utility files that are not treated as tests
+  \item "descibe" describes a test scenario to give context. Can be nested!
+  \item "it" is an actual test
+  \item Final assertion on its own line ('The new post should be visible as the first post on the page'): Think of the final assertion first. What should ultimately be tested? Could describe the flow backwards so that you only need to think of one prerequisite at a time.
+\end{itemize}
+
+From pseudocode to a (barely) running test:
+
+\begin{lstlisting}
+describe('making a post', function() {
+    it('logs in and creates a new post', function() {
+        // go to homepage
+        browser.get('http://localhost:3000');
+        // click 'login'
+        // fill out and submit login form
+        // submit a new post on the posts page
+        
+        // The new post should be visible as the first post on the page
+    });
+});
+\end{lstlisting}
+
+Configure Protractor to use Mocha (and tell it where to find your tests)
+
+\textit{project root}/protractor.conf.js
+\begin{lstlisting}
+exports.config = {
+    framework: 'mocha',
+    specs: [
+        'test/e2e/**/*.spec.js'
+    ]
+};
+\end{lstlisting}
+
+Install Mocha as a dev dependency:
+
+\begin{lstlisting}
+$ npm install --save-dev mocha
+\end{lstlisting}
+
+Run Protractor (the same command as previously, but without 'update'). \textbf{NB}: This requires the file retrieved at \url{http://localhost:3000} to be an actual Angular application. You cannot run this on an empty HTML file!
+
+\begin{lstlisting}
+$ ./node_modules/.bin/protractor    
+\end{lstlisting}
+
+This...
+\begin{itemize}
+  \item Opens a browser window briefly (that's WebDriver/Selenium, required to actually perform the tests)
+  \item Prints information in the console:
+\end{itemize}
+
+\begin{lstlisting}
+./node_modules/.bin/protractor
+Starting selenium standalone server...
+[launcher] Running 1 instances of WebDriver
+Selenium standalone server started at http://10.21.24.41:64200/wd/hub
+
+  <@\textcolor{green}{.}@> making a post logs in and creates a new post: <@\textcolor{red}{457ms}@>
+
+  <@\textcolor{green}{1 passing}@> (460ms)
+
+Shutting down selenium standalone server.
+[launcher] 0 instance(s) of WebDriver still running
+[launcher] chrome #1 passed    
+\end{lstlisting}
+
+Start node inside Protractor
+
+\textit{project root}/protractor.conf.js
+\begin{lstlisting}
+exports.config = {
+    framework: 'mocha',
+    specs: [
+        'test/e2e/**/*.spec.js'
+    ],
+    <@\textcolor{red}{onPrepare}@>: function() {
+        require('./server-node/hello-tests-server.js');
+    }
+};
+\end{lstlisting}
+
+\section{Unit testing}
+
+\begin{itemize}
+  \item Test isolated components (single units, also known as functions and classes)
+  \item Used in both Node and Angular, but completely separately
+  \item Every test is ignorant of the other tests
+  \item These are the tests you write before coding
+  \item Great for test-driven development (TDD)
+\end{itemize}
+
+\end{document}
