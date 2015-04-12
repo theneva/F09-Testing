@@ -1,4 +1,5 @@
 \documentclass[british]{article}
+\usepackage[T1]{fontenc}
 \usepackage{pdfpages}
 \usepackage{fullpage}
 \setlength{\parindent}{0em}
@@ -138,8 +139,7 @@ describe('making a post', function() {
   \item Final assertion on its own line ('The new post should be visible as the first post on the page'): Think of the final assertion first. What should ultimately be tested? Could describe the flow backwards so that you only need to think of one prerequisite at a time.
 \end{itemize}
 
-From pseudocode to a (barely) running test:
-
+From pseudocode to a (barely) running test (test/e2e/making-a-post.spec.js):
 \begin{lstlisting}
 describe('making a post', function() {
     it('logs in and creates a new post', function() {
@@ -199,7 +199,7 @@ Shutting down selenium standalone server.
 [launcher] chrome #1 passed    
 \end{lstlisting}
 
-Start node inside Protractor
+Start node inside Protractor to avoid having to keep the server running at all times.
 
 \textit{project root}/protractor.conf.js
 \begin{lstlisting}
@@ -213,6 +213,88 @@ exports.config = {
     }
 };
 \end{lstlisting}
+
+\dots but this makes you unable to already have a server running. Use a different port set by environment variables!
+
+Edit server.js to pick its port from an environment variable:
+
+\begin{lstlisting}
+var express = require('express');
+var app = express();
+<@ \dots @>
+var port = <@\textcolor{blue}{process.env.PORT ||}@> 3000;
+<@ \dots @>
+app.listen(port, function() {
+    console.log('Listening on port ' + port);
+});
+\end{lstlisting}
+
+Then set the environment variable inside Protractor's onPrepare:
+
+\textit{project root}/protractor.conf.js
+
+\begin{lstlisting}
+exports.config = {
+    framework: 'mocha',
+    specs: [
+        'test/e2e/**/*.spec.js'
+    ],
+    onPrepare: function() {
+        <@\textcolor{blue}{process.env.PORT = 3001;}@>
+        require('./server-node/hello-tests-server.js');
+    }
+};
+\end{lstlisting}
+
+\dots and finally point the test code to the port of the server started by Protractor (3001):
+
+\begin{lstlisting}
+describe('making a post', function() {
+        it('logs in and creates a new post', function() {
+                // go to homepage
+                browser.get('http://localhost:<@\textcolor{blue}{3001}@>');
+                // click 'login'
+                // fill out and submit login form
+                // submit a new post on the posts page
+
+                // the new post should be visible as the first post on the page
+        });
+});
+\end{lstlisting}
+
+Protractor \textbf{Locators}
+
+Interact with the DOM elements on the page! For more information, see \url{https://github.com/angular/protractor/blob/master/docs/locators.md}.
+
+First, get a hold of the DOM element:
+
+\begin{lstlisting}
+// find an element using css selector
+by.css('.someclass');
+
+// find an element using id
+by.id('someid');
+
+// find an element by ng-model (e.g. username)
+by.model('username');
+
+// find an element by binding (e.g., {{currentUser}})
+by.binding('currentUser');
+\end{lstlisting}
+
+Pass the locator to element(locator), and you can interact with it:
+
+\begin{lstlisting}
+// click a button or link
+element(by.css('.mybutton')).click();
+
+// fill out a text input
+element(by.css('.username-input')).sendKeys('theneva');
+\end{lstlisting}
+
+\textbf{NB}: These are all asynchronous events!
+
+
 
 \section{Unit testing}
 
