@@ -1,0 +1,29 @@
+<table class="table" ng-if="currentUser">
+	<tr>
+		<th>Name</th>
+		<th>Author</th>
+		<th>(action)</th>
+	</tr>
+	<tr>
+		<td>
+			<form ng-submit="saveItem(newItem)">
+				<input type="text" class="form-control" placeholder="Name" ng-model="newItem.name">
+			</form>
+		</td>
+		<td></td>
+		<td>
+			<button class="btn btn-success col-xs-5" ng-click="saveItem(newItem)">Save item</button>
+		</td>
+	</tr>
+	<tr ng-repeat="item in items">
+		<td><strong>{{item.name}}</strong></td>
+		<td>{{item.author}}</td>
+		<td></td>
+<!--
+		<td>
+			<button type="submit" class="btn btn-danger col-xs-5" ng-click="deleteItem(item)">Delete</button>
+		</td>
+-->
+	</tr>
+</table>
+<h2 ng-if="!currentUser">Please <a href="/#/login">log in</a></h2>
