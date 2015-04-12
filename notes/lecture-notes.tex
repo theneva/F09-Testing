@@ -280,6 +280,9 @@ by.model('username');
 
 // find an element by binding (e.g., {{currentUser}})
 by.binding('currentUser');
+
+// find an element by repeater (e.g., item in items
+by.repeater('item in items');
 \end{lstlisting}
 
 Pass the locator to element(locator), and you can interact with it:
@@ -332,13 +335,59 @@ var saveButton = element(by.css('.button-save'));
 saveButton.click();
 \end{lstlisting}
 
-Finally, assert that the new item was added to the top of the list:
+Now get a hold of the the item on top of the list so we are ready to make our assertion that the new item was added to the top:
 
 \begin{lstlisting}
+// the new item should be visible as the first item on the page
+element.all(by.repeater('item in items')).then(function(items) {
+	var firstItem = items[0];
+	firstItem.element(by.css('.item-name')).getText().then(function(firstItemName) {
+		console.log(firstItemName);
+	});
 
+	firstItem.element(by.css('.item-author')).getText().then(function(firstItemAuthor) {
+		console.log(firstItemAuthor);
+	});
+});
 \end{lstlisting}
 
+Finally, to make our assertions, we need an assertion library: chai. Install as a dev-dependency with NPM:
+
+\begin{lstlisting}
+$ npm install --save-dev chai
+\end{lstlisting}
+
+Require the appropriate function and make assertions in test/make-an-item.spec.js:
+
+\begin{lstlisting}
+var expect = require('chai').expect;
+\dots
+firstItem.element(by.css('.item-name')).getText().then(function(firstItemName) {
+	<@\textcolor{blue}{expect(firstItemName).to.equal(itemContent);}@>
+});
+
+firstItem.element(by.css('.item-author')).getText().then(function(firstItemAuthor) {
+	<@\textcolor{blue}{expect(firstItemAuthor).to.equal(username);}@>
+});
+\end{lstlisting}
+
+If the returned content was wrong (e.g. the logged in user's username was 'hello', but the author of the post still showed as 'theneva', you would see message in \ref{fig:wrong-assertion}.
+
+\begin{figure}[H]
+    \label{fig:wrong-assertion}
+    \centerline{\includegraphics[scale=0.7]{wrong-assertion}}
+    \caption{Wrong assertion}
+\end{figure}
+
 \textit{browser.pause()} in your tests is a nice tool that lets you pause the test execution and step through so you can see exactly what happens.
+
+The current test stack is as follows: \textbf{Protractor} sets up \textbf{Selenium} and \textbf{WebDriver} and spins up a separate instance of the server on port 3001,  before running all tests in \textit{project root}/test/e2e/ using the testing framework \textbf{Mocha}, which in turn uses \textbf{Chai} to make assertions.
+
+A final trick for end-to-end testing can help avoid that the tests get messy. This can be avoided with the NPM package chai-as-promised, but we will not be looking into this in detail.
+
+One key thing to note is that we are working directly with the application's database. Clearing out the test data is probably a good idea, but figuring out a good way to do it requires some thought. A very simple way to deal with this is simply dropping the database with a Protractor afterEach filter, which works just like onPrepare – simply require the database file (which exports the connected Mongoose instance) and run \textit{the-module}.connection.db.dropDatabase();
+
+If you only have time and resources to test one aspect of your application, then end-to-end tests are probably the absolutely most important kind of tests to write. They use the application like a user is expected to use it, and will be a major player in preventing bugs that directly affect the end users.
 
 \section{Unit testing}
 

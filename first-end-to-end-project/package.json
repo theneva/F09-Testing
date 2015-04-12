@@ -1,6 +1,7 @@
 {
   "name": "first-end-to-end-project",
   "devDependencies": {
+    "chai": "^2.2.0",
     "mocha": "^2.2.4",
     "protractor": "^2.0.0"
   }
