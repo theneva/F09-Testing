@@ -361,7 +361,7 @@ Require the appropriate function and make assertions in test/make-an-item.spec.j
 
 \begin{lstlisting}
 var expect = require('chai').expect;
-\dots
+<@\dots@>
 firstItem.element(by.css('.item-name')).getText().then(function(firstItemName) {
 	<@\textcolor{blue}{expect(firstItemName).to.equal(itemContent);}@>
 });
@@ -385,7 +385,7 @@ The current test stack is as follows: \textbf{Protractor} sets up \textbf{Seleni
 
 A final trick for end-to-end testing can help avoid that the tests get messy. This can be avoided with the NPM package chai-as-promised, but we will not be looking into this in detail.
 
-One key thing to note is that we are working directly with the application's database. Clearing out the test data is probably a good idea, but figuring out a good way to do it requires some thought. A very simple way to deal with this is simply dropping the database with a Protractor afterEach filter, which works just like onPrepare – simply require the database file (which exports the connected Mongoose instance) and run \textit{the-module}.connection.db.dropDatabase();
+One key thing to note is that we are working directly with the application's database. Clearing out the test data is probably a good idea, but figuring out a good way to do it requires some thought. A very simple way to deal with this is simply dropping the database with a Protractor afterEach filter -- simply require the database file (which exports the connected Mongoose instance) and run \textit{the-module}.connection.db.dropDatabase();
 
 If you only have time and resources to test one aspect of your application, then end-to-end tests are probably the absolutely most important kind of tests to write. They use the application like a user is expected to use it, and will be a major player in preventing bugs that directly affect the end users.
 
@@ -398,5 +398,114 @@ If you only have time and resources to test one aspect of your application, then
   \item These are the tests you write before coding
   \item Great for test-driven development (TDD)
 \end{itemize}
+
+Unit testing in Node is not quite unit testing: True unit tests would not actually hit external dependencies like the database (but mock them). True unit tests in Node turns out to be hard work that results in inflexible code.
+
+The Node server will be tested on the controller level, while the Angular code will be truly unit tested.
+
+First Node "unit" test with Mocha to test the environment: \textit{project root}/test/node/controllers/items.spec.js
+
+\begin{lstlisting}
+var expect = require('chai').expect;
+
+var controller = require('../../../server-node/controllers/items');
+
+describe('controllers.items', function() {
+	it('should exist', function() {
+		expect(controller).to.exist;
+	});
+});
+\end{lstlisting}
+
+This test can be run directly with Mocha (as long as it is in the path (for example installed globally with \textit{npm install -g mocha}):
+
+\begin{lstlisting}
+$ mocha test/node/controllers/items.spec.js
+\end{lstlisting}
+
+This should result in the output described in \ref{fig:first-node-mocha-test-passing}
+
+\begin{figure}[H]
+    \label{fig:first-node-mocha-test-passing}
+    \centerline{\includegraphics[scale=0.7]{first-node-mocha-test-passing}}
+    \caption{First Node Mocha test passing}
+\end{figure}
+
+Set up a single command to run all Node tests in \textit{project root}/test/mocha.opts:
+
+\begin{lstlisting}
+test/node
+--recursive
+\end{lstlisting}
+
+Now all tests (found recursively) in /test/server will be executed by running \textit{\$ mocha}.
+
+There are several different test reporters for Mocha. The default one is good for seeing which parts of the code are being tested. You can try others, though, such as
+
+\begin{lstlisting}
+$ mocha -R nyan
+\end{lstlisting}
+
+\begin{figure}[H]
+    \label{fig:nyan-test-reporter}
+    \centerline{\includegraphics[scale=0.7]{nyan-test-reporter}}
+    \caption{Nyan test reporter}
+\end{figure}
+
+\subsection{Code coverage}
+Blanket!
+
+\begin{lstlisting}
+$ npm install --save-dev blanket
+\end{lstlisting}
+
+Used by writing the following file \textit{test/server/support/coverage.js}
+
+\begin{lstlisting}
+var path = require('path');
+var blanket = require('blanket');
+
+blanket({
+    pattern: [
+        path.resolve(__dirname, '../../../controllers')
+    ]
+});
+\end{lstlisting}
+
+\dots and requiring it from test/mocha.opts:
+
+\begin{lstlisting}
+test/server
+--recursive
+<@\textcolor{blue}{--require test/server/support/coverage}@>
+\end{lstlisting}
+
+Create a report with the \textit{html-cov} reporter in Mocha and writing the output to a file \textit{coverage.html}, before opening the file in a browser:
+
+\begin{lstlisting}
+$ mocha -R html-cov > coverage.html
+$ open coverage.html
+\end{lstlisting}
+
+\section{npm test}
+
+Let us finally use package.json for something other than dependencies!
+
+\begin{lstlisting}
+{
+    "name": "itemsApp",
+    "dependencies: "<@\dots@>",
+    "devDependencies": "<@\dots@>",
+    "scripts": {
+        "test: "./node_modules/.bin/mocha && ./node_modules/.bin/protractor"
+    }
+}
+\end{lstlisting}
+
+This \textit{script} can be run by simply typing:
+
+\begin{lstlisting}
+$ npm test    
+\end{lstlisting}
 
 \end{document}
